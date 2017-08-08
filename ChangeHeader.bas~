@@ -6,21 +6,16 @@ Sub ChangeHeader()
     FileName = Dir(DirName & "*.doc")
     HeaderTemplateFileName = "C:\DocReplace\Template\PageHeader.doc"
     Set docTemplate = Documents.Open(HeaderTemplateFileName)
-    Set hdrTemplate = docTemplate.Sections(1).Headers(wdHeaderFooterPrimary)
-    Set hdrTemplate1st = docTemplate.Sections(1).Headers(wdHeaderFooterFirstPage)
+     Set hdr1 = docTemplate.Sections(1).Headers(wdHeaderFooterPrimary)
     Do While FileName <> ""
 
         FullName = DirName & FileName
         Set doc = Documents.Open(FullName)
       
-        Set hdr1stDes = doc.Sections(1).Headers(wdHeaderFooterFirstPage)
-        hdrTemplate1st.Range.Copy
-        hdr1stDes.Range.Paste
 
-        Set hdrDes = doc.Sections(1).Headers(wdHeaderFooterPrimary)
-        hdrTemplate.Range.Copy
-        hdrDes.Range.Paste
-        
+        Set hdr2 = doc.Sections(1).Headers(wdHeaderFooterPrimary)
+        hdr1.Range.Copy
+        hdr2.Range.Paste
         doc.SaveAs2 FileName:="C:\DocReplace\TestDes\" & FileName
     
         doc.Close
