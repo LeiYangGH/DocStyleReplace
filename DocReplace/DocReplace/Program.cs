@@ -110,7 +110,8 @@ namespace DocReplace
 
         static void Main(string[] args)
         {
-            foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\Old", "*.doc"))
+            //foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\Old", "*.doc"))
+            foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\TestSrc", "*.doc"))
             {
                 SaveAsText(docFullName);
             }
