@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Word = Microsoft.Office.Interop.Word;
 namespace DocReplace
@@ -105,20 +108,89 @@ namespace DocReplace
             app.Quit();
         }
 
+        static void ExtractNoDic2File()
+        {
+            string rawFileName = @"C:\DocReplace\Template\nodicraw.txt";
+            //Regex reg = new Regex(@"\s(.{5,50})\s(.{5,15})\s(.{5,15})");
+            Regex reg = new Regex(@"\s(.{5,50})\s([A-Z]{2}.{5,15}\d\d)\s([A-Z]{2}.{5,15}\d\d)");
+            //foreach (string line in File.ReadAllLines(rawFileName, Encoding.Unicode))
+            using (StreamWriter sw = new StreamWriter(@"C:\DocReplace\Template\nodic.txt", false, Encoding.Unicode))
+                foreach (string line in File.ReadAllLines(rawFileName))
+                {
+                    if (reg.IsMatch(line))
+                    {
+                        Match m = reg.Match(line);
+                        MedStandard meds = new MedStandard(m.Groups[1].Value, m.Groups[2].Value, m.Groups[3].Value);
+                        Console.WriteLine(meds);
+                        sw.WriteLine(meds);
+                    }
+                }
+        }
+
+
+        static List<MedStandard> lstMedStandards = new List<MedStandard>();
+
+        static void ReadLstMedStandards()
+        {
+            lstMedStandards = File.ReadAllLines(@"C:\DocReplace\Template\nodic.txt", Encoding.Unicode)
+                .Select(x => x.Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries))
+                .Select(x => new MedStandard(x[0], x[1], x[2])).ToList();
+        }
+
         static void Main(string[] args)
         {
+            //ExtractNoDic2File();
+            ReadLstMedStandards();
+            //foreach (MedStandard meds in lstMedStandards)
+            //    Console.WriteLine(meds);
+
             //foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\Old", "*.doc"))
-            //foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\TestSrc", "*.doc"))
+            //foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\ReplaceHeaderFooter", "*.doc",SearchOption.AllDirectories))
             //{
             //    SaveAsText(docFullName);
             //}
-
-            foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\TestDes", "*.doc"))
+            Regex regTxtNo = new Regex(@"[A-Z]{2}/.{3,15}\d\d", RegexOptions.Compiled);
+            foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\ReplaceHeaderFooter", "*.doc", SearchOption.AllDirectories))
             {
-                SearchReplace(docFullName);
+                Console.WriteLine(docFullName);
+                string MixedName = Path.GetFileNameWithoutExtension(docFullName).Trim().Replace("（包材）", "").Replace("（原料）", "").Replace("（辅料）", "");
+                //string wjmc = regWJBM.Match(MixedName).Groups[1].Value;
+                string wjbm = regWJBM.Match(MixedName).Groups[2].Value;
+                Console.WriteLine(wjbm);
+                var meds = lstMedStandards.FirstOrDefault(x =>
+                  MedStandard.EqualAfterReplaceSpecialChars(x.OldNO, wjbm));
+                if (meds != null)
+                {
+                    Console.WriteLine($"************{meds.NewNO}");
+                    string copyTo = docFullName.Replace("ReplaceHeaderFooter", "ReplaceDicNo")
+                        .Replace(".doc", $"新编号{meds.NewNO.Replace("/", "／")}.doc");
+                    File.Copy(docFullName, copyTo);
+                    //.Replace("/", "斜杠")
+                }
+
+                //string content = File.ReadAllText(txtFullName);
+                //if (regTxtNo.IsMatch(content))
+                //{
+                //    foreach (Match m in regTxtNo.Matches(content))
+                //    {
+                //        string oldNo = m.Value;
+                //        Console.WriteLine(oldNo);
+                //        var meds = lstMedStandards.FirstOrDefault(x =>
+                //          MedStandard.EqualAfterReplaceSpecialChars(x.OldNO, oldNo));
+                //        if (meds != null)
+                //            Console.WriteLine($"************{meds.NewNO}");
+                //    }
+                //}
             }
             Console.WriteLine("ok");
             Console.ReadLine();
+
+
+
+            //foreach (string docFullName in Directory.GetFiles(@"C:\DocReplace\TestDes", "*.doc"))
+            //{
+            //    SearchReplace(docFullName);
+            //}
         }
     }
 }
